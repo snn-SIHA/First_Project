@@ -51,8 +51,8 @@ def checker(data):
   except:
     print('>>> 경고! 데이터 형식이 잘못되었습니다!\n>>> checker(data) / repeat= 샘플 출력 횟수')
 
-folder   = 'ulsan'
-filename = '울산'
+folder   = 'busan'
+filename = '부산'
 pathfind = f'C:/Mtest/project_first/data/{folder}/{filename}.csv'
 pathsave = f'C:/Mtest/project_first/data/{folder}/{filename}refine.csv'
 pathtest = f'C:/Mtest/project_first/data/{folder}/{filename}devide.csv'
