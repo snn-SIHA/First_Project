@@ -6,6 +6,7 @@ from matplotlib import font_manager, rc
 # 한글 폰트 설정
 font_name = font_manager.FontProperties(fname="c:/windows/Fonts/malgun.ttf").get_name()
 rc('font', family=font_name)
+plt.rcParams['axes.unicode_minus'] = False
 
 # CSV 파일 읽기
 data = pd.read_csv("./data/seoul/서울refine.csv", encoding="cp949")
@@ -24,6 +25,8 @@ plt.ylabel('평균 기온 (°C)', fontsize=12)
 plt.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
+
+print(f'그래프 1 출력 완료\n{'- '*40}')
 
 # 기온 비교 시각화
 plt.figure(figsize=(15, 6))
@@ -53,6 +56,8 @@ plt.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 plt.show()
 
+print(f'그래프 2 출력 완료\n{'- '*40}')
+
 # 이상 기온 탐색 (박스플롯)
 plt.figure(figsize=(15, 6))
 sns.boxplot(x='연도', y='평균기온', data=data)
@@ -62,6 +67,8 @@ plt.ylabel('평균 기온 (°C)', fontsize=12)
 plt.xticks(rotation=90)
 plt.tight_layout()
 plt.show()
+
+print(f'그래프 3 출력 완료\n{'- '*40}')
 
 # 추가: 이상치 통계 출력
 def find_outliers(group):
@@ -75,3 +82,12 @@ def find_outliers(group):
 yearly_outliers = data.groupby('연도')['평균기온'].apply(find_outliers)
 print("이상치 연도 및 값:")
 print(yearly_outliers)
+
+'''
+Series([], Name: 평균기온, dtype: float64)
+
+-GPT-
+이 출력은 "평균기온"이라는 이름을 가진 Series가 있지만,
+값이 비어 있다는 뜻이에요. 즉, Series는 생성됐지만,
+데이터가 없다는 뜻이죠.
+'''

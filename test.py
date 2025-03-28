@@ -6,30 +6,24 @@ import seaborn as sb
 import sklearn as skl
 import matplotlib as mpl # 그래프
 import matplotlib.pyplot as plt # 그래프 관련
-from tabulate import tabulate
+from sklearn.preprocessing import LabelEncoder # 인코더
 from sklearn.preprocessing import MinMaxScaler,StandardScaler # 스케일러
-from sklearn.preprocessing import LabelEncoder,OneHotEncoder # 인코더
-from sklearn.preprocessing import LabelBinarizer # 멀티클래스 이진 변환
 from sklearn.linear_model import LinearRegression,LogisticRegression # 모델 : 선형회귀, 로지스틱
-from sklearn.tree import DecisionTreeClassifier # 모델 : 의사결정트리
-from sklearn.ensemble import RandomForestClassifier # 모델 : 랜덤포레스트
-from sklearn.svm import SVC # 모델 : SVC
-from sklearn.datasets import make_classification # 무작위 데이터 생성기
+from sklearn.tree import DecisionTreeRegressor # 모델 : 의사결정트리
+from sklearn.ensemble import RandomForestRegressor # 모델 : 랜덤포레스트
+from sklearn.svm import SVR # 모델 : 서포트벡터
 from sklearn.model_selection import train_test_split # 훈련/평가 데이터 분리
-from sklearn.metrics import accuracy_score,confusion_matrix,classification_report # 평가 프로세스
+from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score # 평가 프로세스
 from sklearn.metrics import roc_auc_score, roc_curve # ROC,AUC
 from matplotlib import font_manager
 from matplotlib import rc
 
-mpl.rc('axes',unicode_minus=False)
-font = font_manager.FontProperties(fname = "c:/Windows/Fonts/malgun.ttf").get_name()
-rc('font',family=font)
-
-def call(data,style=None):
-  if style == None:
-    print(tabulate(data,headers='keys',tablefmt='github'))
-  else:
-    print(tabulate(data,headers='keys',tablefmt=style))
+mpl.rc('axes', unicode_minus=False)
+mpl.rcParams['axes.unicode_minus']=False
+pd.set_option("display.max_colwidth",20) # 출력할 열의 너비
+pd.set_option("display.unicode.east_asian_width",True) # 유니코드 사용 너비 조정
+font_name = font_manager.FontProperties(fname='c:/windows/Fonts/malgun.ttf').get_name()
+rc('font', family=font_name)
 
 def checker(data):
   try:
@@ -51,53 +45,96 @@ def checker(data):
   except:
     print('>>> 경고! 데이터 형식이 잘못되었습니다!\n>>> checker(data) / repeat= 샘플 출력 횟수')
 
-folder   = 'ulsan'
-filename = '울산'
-pathfind = f'C:/Mtest/project_first/data/{folder}/{filename}.csv'
-pathsave = f'C:/Mtest/project_first/data/{folder}/{filename}refine.csv'
-pathtest = f'C:/Mtest/project_first/data/{folder}/{filename}devide.csv'
+folder   = 'seoul'
+filename = '서울'
+pathre = f'C:/Mtest/project_first/data/{folder}/{filename}refine.csv'
+pathde = f'C:/Mtest/project_first/data/{folder}/{filename}devide.csv'
 
 #--------------------------------------------------
+df1 = pd.read_csv(pathre, encoding='cp949')
+df2 = pd.read_csv(pathde, encoding='cp949')
 
-# 컬럼명을 수동으로 지정해 1~7행 무시
-columns = ["년월", "지점", "평균기온(℃)", "평균최저기온(℃)", "평균최고기온(℃)"]
-data = pd.read_csv(pathfind, encoding="cp949", skiprows=8, names=columns)
+# 전월대비온도변화 특성 추가
+df1['전월대비'] = df1['평균기온(℃)'].diff()
+df1['전월대비'] = df1.전월대비.fillna(0)
+df2['전월대비'] = df2['평균기온(℃)'].diff()
+df2['전월대비'] = df2.전월대비.fillna(0)
 
-# strip으로 공백제거
-data["년월"] = data["년월"].str.strip()
+# 작년대비온도변화 특성 추가
+df1['작년대비'] = df1['평균기온(℃)'].diff(12)
+df1['작년대비'] = df1.작년대비.fillna(0)
+df2['작년대비'] = df2['평균기온(℃)'].diff(12)
+df2['작년대비'] = df2.작년대비.fillna(0)
 
-# 년월 컬럼 년도,월 분리 프로세스
-data.년월 = pd.to_datetime(data.년월)
-data.insert(1, '년도', data.년월.dt.year)
-data.insert(2, '월', data.년월.dt.month)
-data.drop('년월',axis=1,inplace=True)
+# 계절 구분 특성 추가
+season_list = {
+  '봄':[3,4,5],
+  '여름':[6,7,8],
+  '가을':[9,10,11],
+  '겨울':[12,1,2]
+}
 
-# 2000년도부터 데이터프레임 재생성
-data = data[data.년도>=2000]
-data.reset_index(drop=True,inplace=True)
+def season_executor(month):
+  for rst,search in season_list.items():
+    if month in search:
+      return rst
+  return 'ERROR'
 
-# 25년 데이터 분리
-testdata = data[data.년도==2025] # 평가할 때 사용
-testdata.reset_index(drop=True,inplace=True)
+df1['계절'] = df1.월.apply(season_executor)
+df2['계절'] = df2.월.apply(season_executor)
 
-# 25년 데이터 제외
-data.drop(data[data.년도 == 2025].index,inplace=True) # 방안 1
-
-checker(data)
+checker(df1)
 print('- '*40)
-call(data.head(),'plane')
-call(data.tail(),'plane')
+
+'''
+컬럼명:
+년도/월/지점/평균기온(℃)/평균최저기온(℃)/평균최고기온(℃)/전월대비/계절
+'''
+#--------------------------------------------------
+
+LNR = LinearRegression()
+SVM = SVR() #?
+DTR = DecisionTreeRegressor() # 이거 괜찮을 지도.
+RFR = RandomForestRegressor()
+
+# 인코딩
+LBE = LabelEncoder()
+df1.계절 = LBE.fit_transform(df1.계절)
+df2.계절 = LBE.transform(df2.계절)
+
+# 고려사항 : 스케일링 여부? 흠.
+STS = StandardScaler()
+
+Xtrain = df1[['년도','월','지점','계절']]
+Xtest = df2[['년도','월','지점','계절']].drop(df2.index[-1])
+ytrain = df1[['평균기온(℃)','평균최저기온(℃)','평균최고기온(℃)','전월대비','작년대비']]
+ytest = df2[['평균기온(℃)','평균최저기온(℃)','평균최고기온(℃)','전월대비','작년대비']].drop(df2.index[-1])
+
+ytrain = STS.fit_transform(ytrain)
+ytest = STS.transform(ytest)
+
+print(f'훈련 데이터 규모 : {Xtrain.shape[0]}')
 print('- '*40)
 
-call(testdata,'plane')
-#data = data[~data["년월"].str.contains("2025", na=False)] # 방안 2
+#--------------------------------------------------
+model = DTR # 모델 입력
 
-# data["년월"] = pd.to_datetime(data["년월"], format="%Y-%m") # 방안 3
-# data["연도"] = data["년월"].dt.year # 연도만 추출
-# data = data[data["연도"] != 2025]  # 2025년 데이터 제거
-#print(data.head())
+#--------------------------------------------------
+model.fit(Xtrain,ytrain)
+pre = model.predict(Xtest)
 
-data.to_csv(pathsave,index=False,encoding='cp949')
-testdata.to_csv(pathtest,index=False,encoding='cp949')
+mae = mean_absolute_error(ytest,pre)
+mse = mean_squared_error(ytest,pre)
+rmse = root_mean_squared_error(ytest,pre)
+r2 = r2_score(ytest,pre)
+
+print(f'실제\n{ytest}\n')
+print(f'예측\n{pre}')
+print('- '*40)
+print(f'실제\n{STS.inverse_transform(ytest)}\n')
+print(f'예측\n{STS.inverse_transform(pre)}')
+
+# 데이터의 부재 때문인가, 성능이 좀 오락가락 하는군요
+# 이거 진짜 어떻게 하지? ㅋㅋㅋㅋ
 
 print('='*80)
