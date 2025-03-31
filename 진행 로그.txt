@@ -612,6 +612,9 @@ webbrowser
 - 각자 추가 작업 진행
 - 혹은 개선방안 논의?
 
+> 모델 개선방안 탐색 : 김보란님
+> 모델 개선방안 탐색 : 우원식님
+
 > 모델 구성 후 예측 및 평가지표 기록 진행
 선형회귀     : 김현태
 의사결정트리 : 김현태
@@ -625,9 +628,13 @@ webbrowser
 전년도 대비 다음년도 월온도 예측결과
 24년 실제/예측온도 비교
 
+> PPT 초안 작업 : 이한휘님님
 
+> 구글 드라이브 : 프로젝트 PPT 공유
+https://docs.google.com/presentation/d/15Yht9YRbV4nhgvGbSUDq5ZsxAqFtUZUuOsKoeTqFmAM/edit?usp=sharing
 
-
+> github : 프로젝트 전체 파일 저장
+https://github.com/snn-SIHA/First_Project
 
 
 
@@ -636,8 +643,11 @@ webbrowser
 
 > 개인 메모 : 수업 종료 후 확인해야 할 사항
 발표시간 : 오전/오후
-발표내용 : 코드 자체인가 아니면 동작원리, 구성인가
+답변 : 오전내로 끝날 예정
 
+발표내용 : 코드 자체인가 아니면 동작원리, 구성인가
+예시 : 프로젝트를 진행하면서 무엇이 중요하고 어떤 식으로 진행해야 하는지를 배울 수 있었다.
+팀워크를 배우고, 
 
 
 
