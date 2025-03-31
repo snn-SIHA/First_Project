@@ -7,8 +7,9 @@ import random
 #--------------------------------------------------
 
 # 무작위 난수
-a=random.randint(1,6)
+a=random.randint(1,4)
 print(a)
+
 
 # 참고용
 '''

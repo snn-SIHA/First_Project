@@ -1,4 +1,6 @@
-# test
+# test_RFR
+# 랜덤포레스트 회귀모델 사용
+# 본 문서는 2000년부터 2023년 까지의 데이터를 학습하고 2024년을 예측.
 
 import pandas as pd
 import numpy as np
@@ -7,14 +9,12 @@ import sklearn as skl
 import matplotlib as mpl # 그래프
 import matplotlib.pyplot as plt # 그래프 관련
 from sklearn.preprocessing import LabelEncoder # 인코더
-from sklearn.preprocessing import MinMaxScaler,StandardScaler # 스케일러
-from sklearn.linear_model import LinearRegression,LogisticRegression # 모델 : 선형회귀, 로지스틱
-from sklearn.tree import DecisionTreeRegressor # 모델 : 의사결정트리
-from sklearn.ensemble import RandomForestRegressor # 모델 : 랜덤포레스트
-from sklearn.svm import SVR # 모델 : 서포트벡터
-from sklearn.model_selection import train_test_split # 훈련/평가 데이터 분리
+from sklearn.preprocessing import StandardScaler # 스케일러
+from sklearn.linear_model import LinearRegression # 선형회귀
+from sklearn.tree import DecisionTreeRegressor # 의사결정트리
+from sklearn.ensemble import RandomForestRegressor # 랜덤포레스트
+from sklearn.svm import SVR # 서포트벡터
 from sklearn.metrics import mean_absolute_error, mean_squared_error, root_mean_squared_error, r2_score # 평가 프로세스
-from sklearn.metrics import roc_auc_score, roc_curve # ROC,AUC
 from matplotlib import font_manager
 from matplotlib import rc
 
@@ -45,96 +45,22 @@ def checker(data):
   except:
     print('>>> 경고! 데이터 형식이 잘못되었습니다!\n>>> checker(data) / repeat= 샘플 출력 횟수')
 
-folder   = 'seoul'
-filename = '서울'
-pathre = f'C:/Mtest/project_first/data/{folder}/{filename}refine.csv'
-pathde = f'C:/Mtest/project_first/data/{folder}/{filename}devide.csv'
+def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
+  try:
+    if name_folder is None:
+      name_folder = input('>>> 데이터를 불러올 폴더명을 입력하세요 : ')
+      name_file = input('>>> 데이터를 불러올 파일명을 입력하세요 : ')
+    pathfind = f'C:/Mtest/project_first/data/{name_folder}/{name_file}'
+    dataframe_refine = pd.read_csv(pathfind+'refine.csv', encoding=encodeing_option)
+    dataframe_devide = pd.read_csv(pathfind+'devide.csv', encoding=encodeing_option)
+    return dataframe_refine,dataframe_devide
+  except:
+    print('>>> 경고! 데이터를 호출할 수 없습니다!\n>>> 폴더 경로를 확인하거나, 파일이 잘못되었을 수 있습니다.')
+    return None,None
 
 #--------------------------------------------------
-df1 = pd.read_csv(pathre, encoding='cp949')
-df2 = pd.read_csv(pathde, encoding='cp949')
-
-# 전월대비온도변화 특성 추가
-df1['전월대비'] = df1['평균기온(℃)'].diff()
-df1['전월대비'] = df1.전월대비.fillna(0)
-df2['전월대비'] = df2['평균기온(℃)'].diff()
-df2['전월대비'] = df2.전월대비.fillna(0)
-
-# 작년대비온도변화 특성 추가
-df1['작년대비'] = df1['평균기온(℃)'].diff(12)
-df1['작년대비'] = df1.작년대비.fillna(0)
-df2['작년대비'] = df2['평균기온(℃)'].diff(12)
-df2['작년대비'] = df2.작년대비.fillna(0)
-
-# 계절 구분 특성 추가
-season_list = {
-  '봄':[3,4,5],
-  '여름':[6,7,8],
-  '가을':[9,10,11],
-  '겨울':[12,1,2]
-}
-
-def season_executor(month):
-  for rst,search in season_list.items():
-    if month in search:
-      return rst
-  return 'ERROR'
-
-df1['계절'] = df1.월.apply(season_executor)
-df2['계절'] = df2.월.apply(season_executor)
+df1,df2 = load_dataframe('seoul','서울')
 
 checker(df1)
-print('- '*40)
-
-'''
-컬럼명:
-년도/월/지점/평균기온(℃)/평균최저기온(℃)/평균최고기온(℃)/전월대비/계절
-'''
-#--------------------------------------------------
-
-LNR = LinearRegression()
-SVM = SVR() #?
-DTR = DecisionTreeRegressor() # 이거 괜찮을 지도.
-RFR = RandomForestRegressor()
-
-# 인코딩
-LBE = LabelEncoder()
-df1.계절 = LBE.fit_transform(df1.계절)
-df2.계절 = LBE.transform(df2.계절)
-
-# 고려사항 : 스케일링 여부? 흠.
-STS = StandardScaler()
-
-Xtrain = df1[['년도','월','지점','계절']]
-Xtest = df2[['년도','월','지점','계절']].drop(df2.index[-1])
-ytrain = df1[['평균기온(℃)','평균최저기온(℃)','평균최고기온(℃)','전월대비','작년대비']]
-ytest = df2[['평균기온(℃)','평균최저기온(℃)','평균최고기온(℃)','전월대비','작년대비']].drop(df2.index[-1])
-
-ytrain = STS.fit_transform(ytrain)
-ytest = STS.transform(ytest)
-
-print(f'훈련 데이터 규모 : {Xtrain.shape[0]}')
-print('- '*40)
-
-#--------------------------------------------------
-model = DTR # 모델 입력
-
-#--------------------------------------------------
-model.fit(Xtrain,ytrain)
-pre = model.predict(Xtest)
-
-mae = mean_absolute_error(ytest,pre)
-mse = mean_squared_error(ytest,pre)
-rmse = root_mean_squared_error(ytest,pre)
-r2 = r2_score(ytest,pre)
-
-print(f'실제\n{ytest}\n')
-print(f'예측\n{pre}')
-print('- '*40)
-print(f'실제\n{STS.inverse_transform(ytest)}\n')
-print(f'예측\n{STS.inverse_transform(pre)}')
-
-# 데이터의 부재 때문인가, 성능이 좀 오락가락 하는군요
-# 이거 진짜 어떻게 하지? ㅋㅋㅋㅋ
 
 print('='*80)
