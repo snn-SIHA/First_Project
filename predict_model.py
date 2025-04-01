@@ -68,7 +68,7 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
     return dataframe_refine,dataframe_devide,name_file
   except:
     print('>>> 경고! 데이터를 호출할 수 없습니다!\n>>> 폴더 경로를 확인하거나, 파일이 잘못되었을 수 있습니다.')
-    return None,None
+    return None,None,None
 
 pathsave = 'C:/Mtest/project_first/'
 
