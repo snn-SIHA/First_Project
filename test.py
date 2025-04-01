@@ -62,5 +62,16 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
 df1,df2 = load_dataframe('seoul','서울')
 
 checker(df2)
+print('- '*40)
 
+df = pd.read_csv('C:/Mtest/project_first/report_data.csv',encoding='cp949')
+print(df[df.모델=='DTR'])
+print('- '*40)
+
+print(df[df.지역=='서울'])
 print('='*80)
+
+print(f'DTR 평균 : {df[df.모델=='DTR'].R2_score.mean()}')
+print(f'LNR 평균 : {df[df.모델=='LNR'].R2_score.mean()}')
+print(f'RFR 평균 : {df[df.모델=='RFR'].R2_score.mean()}')
+print(f'SVR 평균 : {df[df.모델=='SVR'].R2_score.mean()}')
