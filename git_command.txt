@@ -1,0 +1,20 @@
+저장소 경로 설정
+git remote add origin "경로"
+
+origin 경로
+https://github.com/snn-SIHA/First_Project
+
+main에서 파일 불러오기
+git pull origin main
+
+커밋 (수정내용) 작성
+git commit -m "내용"
+
+수정된 파일만 추가
+git add -u
+
+main에 업로드
+git push origin main
+
+변경 된 내용 중 추적 중인 파일, 추적 중이지 않은 파일 출력
+git status
