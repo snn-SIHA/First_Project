@@ -65,7 +65,7 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
     pathfind = f'C:/Mtest/project_first/data/{name_folder}/{name_file}'
     dataframe_refine = pd.read_csv(pathfind+'refine.csv', encoding=encodeing_option)
     dataframe_devide = pd.read_csv(pathfind+'devide.csv', encoding=encodeing_option)
-    return dataframe_refine,dataframe_devide
+    return dataframe_refine,dataframe_devide,name_file
   except:
     print('>>> 경고! 데이터를 호출할 수 없습니다!\n>>> 폴더 경로를 확인하거나, 파일이 잘못되었을 수 있습니다.')
     return None,None
@@ -73,7 +73,7 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
 pathsave = 'C:/Mtest/project_first/'
 
 #--------------------------------------------------
-df1,df2 = load_dataframe()
+df1,df2,locate = load_dataframe()
 
 # 전월대비온도변화 특성 추가
 df1['전월대비'] = df1['평균기온(℃)'].diff()
@@ -201,7 +201,7 @@ for i,s in enumerate(season):
   row,col = i//2,i%2 # 각 그래프의 행과 열
   sb.lineplot(dfs,x='월',y='실제 평균온도',label='실제 평균온도',ax=ax[row,col],color='royalblue')
   sb.lineplot(dfs,x='월',y='예측 평균온도',label='예측 평균온도',ax=ax[row,col],color='red')
-  ax[row,col].set_title(f'2024년 {s} 기온 예측 결과')
+  ax[row,col].set_title(f'2024년 {locate} {s} 기온 예측 결과')
   ax[row,col].legend()
 plt.tight_layout()
 plt.savefig(pathsave+'test1')

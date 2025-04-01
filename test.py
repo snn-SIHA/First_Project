@@ -61,6 +61,6 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
 #--------------------------------------------------
 df1,df2 = load_dataframe('seoul','서울')
 
-checker(df1)
+checker(df2)
 
 print('='*80)
