@@ -73,7 +73,7 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
 pathsave = 'C:/Mtest/project_first/'
 
 #--------------------------------------------------
-df1,df2 = load_dataframe('seoul','서울')
+df1,df2 = load_dataframe()
 
 # 전월대비온도변화 특성 추가
 df1['전월대비'] = df1['평균기온(℃)'].diff()
@@ -180,13 +180,14 @@ df = dfte[['년도','월','계절']].reset_index(drop=True)         # 년,월
 df['실제 평균온도'] = df1
 df['예측 평균온도'] = df2
 df['예측 편차'] = df2-df1
+df['예측 편차'] = df['예측 편차'].apply(lambda x: float(x))
 df.계절 = LBE.inverse_transform(df.계절.astype('int')) # 계절 인코딩 풀기
 print(df)
 print('- '*40)
 
 #--------------------------------------------------
 # 결과 종합
-print(f'\n사용된 모델 : {model}')
+print(f'사용된 모델 : {model}')
 print(f'MAE : {mae}\nMSE : {mse}\nRMSE : {rmse}\nR2_score : {r2}')
 
 # 시각화 1 : 실제 온도 / 예측 온도 비교 그래프
