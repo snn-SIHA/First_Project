@@ -7,6 +7,8 @@
 '''
 import pandas as pd
 import numpy as np
+pd.set_option("display.max_colwidth",20) # 출력할 열의 너비
+pd.set_option("display.unicode.east_asian_width",True) # 유니코드 사용 너비 조정
 
 def checker(data):
   try:

@@ -1,16 +1,7 @@
-# predict_model
-# 각종 파일과 모델을 한 파일에서 실행할 수 있도록 구성된 코드.
-# 코드 실행 후 폴더명, 파일명을 입력하여 csv파일 열람.
-# 이후 모델을 입력하여 학습 후 예측 실행
-# 본 문서에서는 2000~2023년 까지의 데이터를 학습하고 2024년을 예측.
-
-'''
-모델 구성
-LNR : 선형회귀(LinearRegression)
-DTR : 의사결정트리(DecisionTreeRegressor)
-RFR : 랜덤포레스트(RandomForestRegressor)
-SVM : 서포트벡터(SVR)
-'''
+# predict_2025
+# 기본 구성은 predict_model.py와 동일
+# 모델은 랜덤포레스트로 고정
+# 본 문서에서는 2000~2024년 까지의 데이터를 학습하고 2025년을 예측.
 
 #--------------------------------------------------
 import pandas as pd
@@ -65,16 +56,33 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
     pathfind = f'C:/Mtest/project_first/data/{name_folder}/{name_file}'
     dataframe_refine = pd.read_csv(pathfind+'refine.csv', encoding=encodeing_option)
     dataframe_devide = pd.read_csv(pathfind+'devide.csv', encoding=encodeing_option)
-    return dataframe_refine,dataframe_devide,name_file
+    return dataframe_refine,dataframe_devide,name_folder,name_file
   except:
     print('>>> 경고! 데이터를 호출할 수 없습니다!\n>>> 폴더 경로를 확인하거나, 파일이 잘못되었을 수 있습니다.')
-    return None,None,None
+    return None,None,None,None
 
 pathsave = 'C:/Mtest/project_first/'
 
 #--------------------------------------------------
-df1,df2,locate = load_dataframe()
+df1,df2,locate_folder,locate_file = load_dataframe()
+print('- '*40)
+checker(df1)
+print('- '*40)
 
+#--------------------------------------------------
+# 2025년 데이터 확장
+months = list(range(4, 13))  # 4~12월
+stations = df2["지점"].unique()  # 기존의 지점 정보 가져오기
+
+new_data = []
+for station in stations:
+  for month in months:
+    new_data.append([2025, month, station, np.nan, np.nan, np.nan])
+new_df = pd.DataFrame(new_data, columns=["년도","월","지점","평균기온(℃)","평균최저기온(℃)","평균최고기온(℃)"])
+
+df2 = pd.concat([df2,new_df],ignore_index=True)
+
+#--------------------------------------------------
 # 전월대비온도변화 특성 추가
 df1['전월대비'] = df1['평균기온(℃)'].diff()
 df1['전월대비'] = df1.전월대비.fillna(0)
@@ -110,103 +118,81 @@ df1['cos_month'] = np.cos(2 * np.pi * df1['월'] / 12)  # 코사인 함수로 �
 df2['sin_month'] = np.sin(2 * np.pi * df2['월'] / 12)
 df2['cos_month'] = np.cos(2 * np.pi * df2['월'] / 12)
 
-checker(df1)
-print('- '*40)
-
-'''
-컬럼명:
-년도/월/지점/평균기온(℃)/평균최저기온(℃)/평균최고기온(℃)/전월대비/작년대비/계절/sin_month/cos_month
-'''
 #--------------------------------------------------
-#데이터 분리 : 2000~2023년 : 훈련 / 2024년 : 평가
-
-dftr = df1[df1.년도<=2023]
-dfte = df1[df1.년도==2024]
-
-#--------------------------------------------------
-# 모델 선정
-LNR = LinearRegression()
-DTR = DecisionTreeRegressor()
+# 모델 등록
 RFR = RandomForestRegressor()
-SVM = SVR(kernel='linear')
 
 # 인코딩
 LBE = LabelEncoder()
-dftr.loc[:, '계절'] = LBE.fit_transform(dftr.계절)
-dfte.loc[:, '계절'] = LBE.transform(dfte.계절)
+df1.loc[:, '계절'] = LBE.fit_transform(df1.계절)
+df2.loc[:, '계절'] = LBE.transform(df2.계절)
 
 # 고려사항 : 스케일링 여부? 그냥 필수로 때려박겠슴다.
 STS = StandardScaler()
 
-Xtrain = dftr[['년도','월','지점','계절','sin_month','cos_month']]
-Xtest = dfte[['년도','월','지점','계절','sin_month','cos_month']]
-ytrain = dftr[['평균기온(℃)']]
-ytest = dfte[['평균기온(℃)']]
+Xtrain = df1[['년도','월','지점','계절','sin_month','cos_month']]
+Xtest = df2[['년도','월','지점','계절','sin_month','cos_month']]
+ytrain = df1[['평균기온(℃)']]
+ytest = df2[['평균기온(℃)']]
 
 ytrain = STS.fit_transform(ytrain)
 ytest = STS.transform(ytest)
 
-print(f'훈련 데이터 규모 : {Xtrain.shape[0]}')
-print(f'평가 데이터 규모 : {Xtest.shape[0]}')
+print(f'예측 모델 데이터 관련 정보\n훈련 데이터 규모 : {Xtrain.shape[0]}\n평가 데이터 규모 : {Xtest.shape[0]}')
 print('- '*40)
 
 #--------------------------------------------------
-try:
-  model = eval(input('>>> 모델 입력 : '))
-except:
-  print('>>> 모델명 입력 오류')
-
-#--------------------------------------------------
 # 모델 학습/예측 진행
-model.fit(Xtrain,ytrain.ravel()) # 경고 출력
-pre = model.predict(Xtest).reshape(-1,1)
+RFR.fit(Xtrain,ytrain.ravel())
+pre = RFR.predict(Xtest).reshape(-1,1)
 
-# 평가 진행
+'''
+# 평가 금지 : 2025년은 평가할 수 없음
 mae = mean_absolute_error(ytest,pre)
 mse = mean_squared_error(ytest,pre)
 rmse = root_mean_squared_error(ytest,pre)
 r2 = r2_score(ytest,pre)
-
-# 스케일링 변환 후 터미널 결과 출력
-print(f'실제\n{STS.inverse_transform(ytest)}\n')
-print(f'예측\n{STS.inverse_transform(pre).round(1)}')
-print('- '*40)
+'''
 
 #--------------------------------------------------
 # 결과 데이터프레임화
-df1 = pd.DataFrame(STS.inverse_transform(ytest))        # 실제값
-df2 = pd.DataFrame(STS.inverse_transform(pre).round(1)) # 예측값
-df = dfte[['년도','월','계절']].reset_index(drop=True)         # 년,월
-df['실제 평균온도'] = df1
-df['예측 평균온도'] = df2
-df['예측 편차'] = df2-df1
-df['예측 편차'] = df['예측 편차'].apply(lambda x: float(x))
-df.계절 = LBE.inverse_transform(df.계절.astype('int')) # 계절 인코딩 풀기
-print(df)
-print('- '*40)
+dfp = pd.DataFrame(STS.inverse_transform(pre).round(1)) # 예측값
+df2['예측기온(℃)'] = dfp
+
+# 예측 결과 반영된 데이터프레임 생성
+dfp = df2[['년도','월','계절','평균기온(℃)','예측기온(℃)']]
+dfp = dfp.copy()
+dfp.계절 = LBE.inverse_transform(dfp.계절.astype(int))
+
+# 2025 전년대비를 구하기 위한 데이터프레임 
+cal = df1[df1.년도==2024].copy().reset_index(drop=True)
+cal['예측기온(℃)'] = dfp['예측기온(℃)']
+cal['2025'] = cal['예측기온(℃)'] - cal['평균기온(℃)']
+dfp['전년대비'] = cal['2025']
 
 #--------------------------------------------------
 # 결과 종합
-print(f'사용된 모델 : {model}')
-print(f'MAE : {mae}\nMSE : {mse}\nRMSE : {rmse}\nR2_score : {r2}')
-print('- '*40)
+print(f'사용된 모델 : {RFR}')
+print(dfp)
 
-# 시각화 1 : 실제 온도 / 예측 온도 비교 그래프
-season = df.계절.unique()
+# 시각화 진행 중...
+plt.figure(figsize=(8,4.5))
+plt.plot(cal['월'],cal['평균기온(℃)'],marker='o',markersize=4.5,label='2024년 평균온도',color='royalblue')
+plt.plot(cal['월'],cal['예측기온(℃)'],marker='o',markersize=4.5,label='2025년 예측온도',color='red')
 
-fig,ax = plt.subplots(2,2,figsize=(12,8))
-for i,s in enumerate(season):
-  dfs = df[df.계절==s]
-  if s == '겨울':
-    dfs.loc[dfs['월']==12,'월'] = 0
-  row,col = i//2,i%2 # 각 그래프의 행과 열
-  sb.lineplot(dfs,x='월',y='실제 평균온도',label='실제 평균온도',ax=ax[row,col],color='royalblue')
-  sb.lineplot(dfs,x='월',y='예측 평균온도',label='예측 평균온도',ax=ax[row,col],color='red')
-  ax[row,col].set_title(f'2024년 {locate} {s} 기온 예측 결과')
-  ax[row,col].legend()
+for i, (x, y1, y2) in enumerate(zip(cal['월'], cal['평균기온(℃)'], cal['예측기온(℃)'])):
+  plt.text(x, y1 + 1.5, f"{y1:.1f}", ha='center', fontsize=9, color='royalblue')
+  plt.text(x, y2 - 2.2, f"{y2:.1f}", ha='center', fontsize=9, color='red')
+
+plt.xticks(range(1, 13), labels=[f"{i}월" for i in range(1, 13)])
+plt.ylabel('온도(℃)')
+plt.xlabel('')
+plt.ylim(-3.5,32.5)
+plt.title(f'2025년 {locate_file} 기온 예측')
+plt.legend(loc='best')
+plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(pathsave+'seoul_2024')
-print(f'>>> {pathsave+'seoul_2024'} 생성 완료')
-#plt.show()
+plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025.png')
+plt.show()
 
 print('='*80)
