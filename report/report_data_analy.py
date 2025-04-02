@@ -50,11 +50,6 @@ print('- '*40)
 print(df[df.지역=='서울'])
 print('- '*40)
 
-print(f'DTR 평균 : {df[df.모델=='DTR'].R2_score.mean()}')
-print(f'LNR 평균 : {df[df.모델=='LNR'].R2_score.mean()}')
-print(f'RFR 평균 : {df[df.모델=='RFR'].R2_score.mean()}')
-print(f'SVR 평균 : {df[df.모델=='SVR'].R2_score.mean()}')
-
 #--------------------------------------------------
 # 시각화 준비
 r2_avg = df.groupby("모델")["R2_score"].mean().round(3) # 평균 계산
@@ -84,7 +79,7 @@ for i, v in enumerate(r2_avg[['LNR','SVR']].values):
   main.text(i, v+0.002, f'{v:.4f}', ha='center', va='bottom', fontsize=10.5)
 plt.tight_layout()
 plt.savefig('C:/Mtest/project_first/report_1.png')
-plt.show()
+#plt.show()
 
 #--------------------------------------------------
 # 시각화 : DTR,RFR
@@ -110,6 +105,24 @@ for i, v in enumerate(r2_avg[['DTR','RFR']].values):
   main.text(i, v+0.002, f'{v:.4f}', ha='center', va='bottom', fontsize=10.5)
 plt.tight_layout()
 plt.savefig('C:/Mtest/project_first/report_2.png')
+#plt.show()
+
+#--------------------------------------------------
+# 시각화 : 각 평가지표 비교
+
+avg_list = df.groupby("모델")[["MAE", "MSE", "RMSE", "R2_score"]].mean().round(3).reset_index()
+dfm = avg_list.drop(columns=["R2_score"]).melt(id_vars=["모델"],var_name="지표",value_name="값")
+print(dfm)
+
+plt.figure(figsize=(8,5))
+sb.barplot(dfm,x='지표',y='값',hue='모델',palette='pastel')
+plt.ylabel('')
+plt.xlabel('')
+plt.title('모델별 평가지수 비교')
+plt.ylim(0,0.3)
+plt.legend()
+plt.tight_layout()
+plt.savefig('C:/Mtest/project_first/report_3.png')
 plt.show()
 
 print('='*80)

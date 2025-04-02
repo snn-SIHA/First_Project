@@ -63,5 +63,4 @@ df1,df2 = load_dataframe('seoul','서울')
 
 checker(df2)
 
-print(df1[df1.월==8])
 print('- '*40)

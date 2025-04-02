@@ -189,6 +189,7 @@ print('- '*40)
 # 결과 종합
 print(f'사용된 모델 : {model}')
 print(f'MAE : {mae}\nMSE : {mse}\nRMSE : {rmse}\nR2_score : {r2}')
+print('- '*40)
 
 # 시각화 1 : 실제 온도 / 예측 온도 비교 그래프
 season = df.계절.unique()
@@ -204,8 +205,9 @@ for i,s in enumerate(season):
   ax[row,col].set_title(f'2024년 {locate} {s} 기온 예측 결과')
   ax[row,col].legend()
 plt.tight_layout()
-plt.savefig(pathsave+'test1')
-# plt.show()
+plt.savefig(pathsave+'seoul_2024')
+print(f'>>> {pathsave+'seoul_2024'} 생성 완료')
+#plt.show()
 
 # 시각화 2 : 계절별 온도 그래프? 아니면... 흠...
 # 여러 모델을 동시에 돌리는 코드도 만들 거라면, 차라리 R2를 비교하는 그래프?
