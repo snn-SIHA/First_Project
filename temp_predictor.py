@@ -20,6 +20,7 @@ from matplotlib import font_manager
 from matplotlib import rc
 import time
 import os
+import warnings
 
 mpl.rc('axes', unicode_minus=False)
 mpl.rcParams['axes.unicode_minus']=False
@@ -27,6 +28,7 @@ pd.set_option("display.max_colwidth",20) # 출력할 열의 너비
 pd.set_option("display.unicode.east_asian_width",True) # 유니코드 사용 너비 조정
 font_name = font_manager.FontProperties(fname='c:/windows/Fonts/malgun.ttf').get_name()
 rc('font', family=font_name)
+warnings.simplefilter("ignore", UserWarning)
 
 def checker(data):
   try:
@@ -64,27 +66,20 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
 pathsave = 'C:/Mtest/project_first/'
 
 #--------------------------------------------------
-# 프로그램 데이터
-LNR = LinearRegression()
-DTR = DecisionTreeRegressor()
-RFR = RandomForestRegressor()
-SVM = SVR(kernel='linear')
-model = RFR # 기본 모델 : 랜덤포레스트회귀
-
-#--------------------------------------------------
 # 프로그램 소개
 intro = f'''
-{'-'*40}
+{'- '*40}
 이 프로그램은 2000년부터 2024년까지의 기상청 데이터를 바탕으로 2025년의 온도를 예측합니다.
 기본적으로 ./data 폴더를 기반으로 데이터를 불러오며, 폴더와 파일명을 입력하는 것으로 데이터 파일을 호출할 수 있습니다.
 또한, 예측 모델을 변경할 수 있으며, 기본적으로 랜덤포레스트 회귀 모델을 사용합니다. 모델은 변경할 수 있으며, 변경 가능한 모델은 선형회귀, 의사결정트리, 랜덤포레스트, 서포트벡터회귀 모델을 지원합니다.
 필요에 따라 예측 후 그래프를 생성하고 저장할 수 있으며, 그래프는 ./pic 폴더에 저장됩니다. 또한, 저장 후 즉시 출력하는 기능이 포함되어 있습니다.
-{'-'*40}
+{'- '*40}
 '''
 
 #--------------------------------------------------
 # 예측 실행 함수
-def model_running():
+def model_running(m):
+  model = m
   # 데이터프레임 호출
   df1,df2,locate_folder,locate_file = load_dataframe() # 폴더명, 파일명으로 추적 
   if df1 is None:
@@ -195,7 +190,7 @@ def model_running():
     if gcode == 'y':
       os.makedirs("./pic", exist_ok=True) # 폴더 유무 체크 후 생성
       # 시각화 : lineplot
-      plt.figure(figsize=(8,4.5))
+      fig1 = plt.figure(figsize=(8,4.5))
       plt.plot(cal['월'],cal['평균기온(℃)'],marker='o',markersize=4.5,label='2024년 평균온도',color='royalblue')
       plt.plot(dfp['월'],dfp['평균기온(℃)'],marker='o',markersize=4.5,label='2025년 평균온도',color='forestgreen')
       plt.plot(cal['월'],cal['예측기온(℃)'],marker='o',markersize=4.5,label='2025년 예측온도',color='red')
@@ -208,7 +203,8 @@ def model_running():
       plt.ylabel('온도(℃)')
       plt.xlabel('')
       plt.ylim(-3.5,32.5)
-      plt.title(f'2025년 {locate_file} 기온 예측')
+      plt.title(f'2025년 {locate_file} 기온 예측\n')
+      plt.text(6.5, 33.5, f'예측 모델 : {model}', fontsize=9.5, ha='center')
       plt.legend(loc='best')
       plt.grid(axis='y',linestyle='--',alpha=0.35)
       plt.tight_layout()
@@ -216,13 +212,27 @@ def model_running():
       print(f'>>> C:/Mtest/project_first/pic/{locate_folder}_2025_L_1.0.png')
       #--------------------------------------------------
       # 시각화 : barplot
-      plt.figure(figsize=(8,4.5))
-      sb.barplot(dfp,x='월',y='전년대비',color='orange',alpha=0.75)
+      fig2 = plt.figure(figsize=(8,4.5))
+      colors = ['deepskyblue' if y > 0 else 'orange' for y in dfp['전년대비']]
+      sb.barplot(dfp,x='월',y='전년대비',palette=colors,hue='월',legend=False)
+      
+      for i, (x, y) in enumerate(zip(dfp['월'], dfp['전년대비'])):  # '기온변화' 컬럼 사용
+        offset = 0.05 if y > 0 else -0.12
+        plt.text(i, y+offset, f"{y:.1f}", fontsize=9, ha='center', color='deepskyblue' if y > 0 else 'orange')
+      
       plt.xticks(range(12), labels=[f"{i}월" for i in range(1, 13)])
-      plt.ylabel('온도(℃)')
+      plt.ylabel('전년 대비 온도 편차')
       plt.xlabel('')
-      plt.ylim(-1.5,1.5)
-      plt.title(f'2025년 {locate_file} 전년 대비 온도 변화')
+
+      y_abs_max = max(abs(dfp['전년대비'].min()), abs(dfp['전년대비'].max()))
+      ylim_max = max(1.5, y_abs_max)
+      ylim_max = min(ylim_max+(y_abs_max*0.15), 4.5)
+      ylim_min = -ylim_max
+
+      plt.ylim(ylim_min, ylim_max)
+      plt.title(f'2025년 {locate_file} 전년 대비 온도 변화\n')
+      sub_y = ylim_max * 1.05
+      plt.text(5.5, sub_y, f'예측 모델 : {model}', fontsize=9.5, ha='center')
       plt.grid(axis='y',linestyle='--',alpha=0.35)
       plt.tight_layout()
       plt.savefig(f'C:/Mtest/project_first/pic/{locate_folder}_2025_B_1.0.png')
@@ -232,6 +242,10 @@ def model_running():
         gcode = input('>>> 그래프를 바로 확인하시겠습니까? (y/n) : ')
         if gcode == 'y':
           print('- '*40)
+          def on_close(event):
+            plt.close('all')
+          fig1.canvas.mpl_connect('close_event', on_close)
+          fig2.canvas.mpl_connect('close_event', on_close)
           plt.show()
           break
         elif gcode == 'n':
@@ -247,37 +261,43 @@ def model_running():
 
 #--------------------------------------------------
 # 프로그램
+def predictor():
+  LNR = LinearRegression()
+  DTR = DecisionTreeRegressor()
+  RFR = RandomForestRegressor()
+  SVM = SVR(kernel='linear')
+  model = RFR # 기본 모델 : 랜덤포레스트회귀
+  print('>>> 2025년 기온 예측 프로그램을 실행합니다.')
+  while True:
+    print('>>> 1. 예측 실행 / 2. 모델 변경 / 3. 프로그램 소개 / q. 종료')
+    exec = input('>>> 실행 작업 선택 : ')
 
-print('>>> 2025년 기온 예측 프로그램을 실행합니다.')
-while True:
-  print('>>> 1. 예측 실행 / 2. 모델 변경 / 3. 프로그램 소개 / q. 종료')
-  exec = input('>>> 실행 작업 선택 : ')
+    if exec == '1':
+      print(f'\n>>> 예측 모델을 실행합니다.')
+      model_running(model)
 
-  if exec == '1':
-    print(f'\n>>> 예측 모델을 실행합니다.')
-    model_running()
+    elif exec == '2':
+      print('\n>>> 모델을 변경합니다.')
+      try:
+        print(">>> 사용 가능한 모델 목록\nLNR : LinearRegression()\nDTR : DecisionTreeRegressor()\nRFR : RandomForestRegressor()\nSVM : SVR(kernel='linear')")
+        model = eval(input('>>> 모델 입력 : '))
+        print(f'>>> 모델 변경 완료.\n{'- '*40}')
+      except:
+        print(f'>>> 모델명 입력 오류\n{'- '*40}')
 
-  elif exec == '2':
-    print('\n>>> 모델을 변경합니다.')
-    try:
-      print(">>> 사용 가능한 모델 목록\nLNR : LinearRegression()\nDTR : DecisionTreeRegressor()\nRFR : RandomForestRegressor()\nSVM : SVR(kernel='linear')")
-      model = eval(input('>>> 모델 입력 : '))
-      print(f'>>> 모델 변경 완료.\n{'- '*40}')
-    except:
-      print(f'>>> 모델명 입력 오류\n{'- '*40}')
+    elif exec == '3':print(f'\n>>> 프로그램 소개{intro}')
 
-  elif exec == '3':
-    print(f'\n>>> 프로그램 소개\n{intro}')
+    elif exec == 'q':
+      print(f'\n>>> 프로그램을 종료합니다.')
+      break
 
-  elif exec == 'q':
-    print(f'\n>>> 프로그램을 종료합니다.')
-    break
+    elif exec == 'T':print(f'\n>>> TRACER\n현재 모델 : {model}\n{'- '*40}')
 
-  elif exec == 'T':
-    print(f'\n>>> TRACER\n현재 모델 : {model}\n{'- '*40}')
+    else:
+      print('>>> 경고! 잘못된 입력입니다.\n')
+      continue
 
-  else:
-    print('>>> 경고! 잘못된 입력입니다.\n')
-    continue
+if __name__ == "__main__":
+  predictor()
 
 print('='*80)
