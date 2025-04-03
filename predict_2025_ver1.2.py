@@ -1,7 +1,6 @@
 # predict_2025
-# ver 1.0
-# 기본 구성은 predict_model.py와 동일
-# 모델은 랜덤포레스트로 고정
+# ver 1.2
+# 업데이트 내용 : 전년대비의 학습 방식을 변경
 # 본 문서에서는 2000~2024년 까지의 데이터를 학습하고 2025년을 예측.
 
 #--------------------------------------------------
@@ -89,10 +88,10 @@ df2['전월대비'] = df2['평균기온(℃)'].diff()
 df2['전월대비'] = df2.전월대비.fillna(0)
 
 # 작년대비온도변화 특성 추가
-df1['작년대비'] = df1['평균기온(℃)'].diff(12)
-df1['작년대비'] = df1.작년대비.fillna(0)
-df2['작년대비'] = df2['평균기온(℃)'].diff(12)
-df2['작년대비'] = df2.작년대비.fillna(0)
+df1['전년대비'] = df1['평균기온(℃)'].diff(12)
+df1['전년대비'] = df1.전년대비.fillna(0)
+df2['전년대비'] = df2['평균기온(℃)'].diff(12)
+df2['전년대비'] = df2.전년대비.fillna(0)
 
 # 계절 구분 특성 추가
 season_list = {
@@ -129,13 +128,15 @@ df2.loc[:, '계절'] = LBE.transform(df2.계절)
 # 훈련, 평가 데이터 분리
 Xtrain = df1[['년도','월','지점','계절','sin_month','cos_month']]
 Xtest = df2[['년도','월','지점','계절','sin_month','cos_month']]
-ytrain = df1[['평균기온(℃)']]
-ytest = df2[['평균기온(℃)']]
+ytrain = df1[['평균기온(℃)','전년대비']]
+ytest = df2[['평균기온(℃)','전년대비']]
 
 # 스케일링
 STS = StandardScaler()
-ytrain = STS.fit_transform(ytrain)
-ytest = STS.transform(ytest)
+scaled = STS.fit_transform(ytrain[['평균기온(℃)']])
+ytrain['평균기온(℃)'] = scaled
+scaled = STS.transform(ytest[['평균기온(℃)']])
+ytest['평균기온(℃)'] = scaled
 
 # 훈련, 평가 데이터 규모 출력
 print(f'예측 모델 데이터 관련 정보\n훈련 데이터 규모 : {Xtrain.shape[0]}\n평가 데이터 규모 : {Xtest.shape[0]}')
@@ -143,8 +144,8 @@ print('- '*40)
 
 #--------------------------------------------------
 # 모델 학습/예측 진행
-RFR.fit(Xtrain,ytrain.ravel())
-pre = RFR.predict(Xtest).reshape(-1,1)
+RFR.fit(Xtrain,ytrain)
+pre = RFR.predict(Xtest)
 
 '''
 # 평가 금지 : 2025년은 평가할 수 없음
@@ -153,10 +154,11 @@ mse = mean_squared_error(ytest,pre)
 rmse = root_mean_squared_error(ytest,pre)
 r2 = r2_score(ytest,pre)
 '''
-
 #--------------------------------------------------
 # 결과 데이터프레임화
+pre.reshape(-1,1)
 dfp = pd.DataFrame(STS.inverse_transform(pre).round(1)) # 예측값
+dfp = dfp.iloc[:,0]
 df2['예측기온(℃)'] = dfp
 
 # 예측 결과 반영된 데이터프레임 생성
@@ -196,7 +198,7 @@ plt.title(f'2025년 {locate_file} 기온 예측')
 plt.legend(loc='best')
 plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025_L.png')
+plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025_L_test.png')
 plt.show()
 
 #--------------------------------------------------
@@ -210,7 +212,7 @@ plt.ylim(-1.5,1.5)
 plt.title(f'2025년 {locate_file} 전년 대비 온도 변화')
 plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025_B.png')
+plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025_B_test.png')
 plt.show()
 
 print('='*80)
