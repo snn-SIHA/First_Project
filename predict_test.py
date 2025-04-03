@@ -1,8 +1,5 @@
-# predict_2025
-# ver 1.0
-# 기본 구성은 predict_model.py와 동일
-# 모델은 랜덤포레스트로 고정
-# 본 문서에서는 2000~2024년 까지의 데이터를 학습하고 2025년을 예측.
+# predict_test
+# 절대 사용하지 말 것.
 
 #--------------------------------------------------
 import pandas as pd
@@ -14,7 +11,10 @@ import matplotlib.pyplot as plt # 그래프 관련
 from matplotlib.gridspec import GridSpec # 그래프 관련
 from sklearn.preprocessing import LabelEncoder # 인코더
 from sklearn.preprocessing import StandardScaler # 스케일러
+from sklearn.linear_model import LinearRegression # 선형회귀
+from sklearn.tree import DecisionTreeRegressor # 의사결정트리
 from sklearn.ensemble import RandomForestRegressor # 랜덤포레스트
+from sklearn.svm import SVR # 서포트 벡터 회귀
 from matplotlib import font_manager
 from matplotlib import rc
 
@@ -62,7 +62,7 @@ pathsave = 'C:/Mtest/project_first/'
 
 #--------------------------------------------------
 # 데이터프레임 호출
-df1,df2,locate_folder,locate_file = load_dataframe() # 폴더명, 파일명으로 추적
+df1,df2,locate_folder,locate_file = load_dataframe('seoul','서울') # 폴더명, 파일명으로 추적
 print('- '*40)
 checker(df1) # 데이터프레임 출력
 print('- '*40)
@@ -119,7 +119,7 @@ df2['cos_month'] = np.cos(2 * np.pi * df2['월'] / 12)
 
 #--------------------------------------------------
 # 모델 등록
-RFR = RandomForestRegressor()
+RFR = SVR(kernel='linear')
 
 # 인코딩
 LBE = LabelEncoder()
@@ -145,6 +145,7 @@ print('- '*40)
 # 모델 학습/예측 진행
 RFR.fit(Xtrain,ytrain.ravel())
 pre = RFR.predict(Xtest).reshape(-1,1)
+print(f'>>> TRACE\n{pre}')
 
 '''
 # 평가 금지 : 2025년은 평가할 수 없음
@@ -196,8 +197,6 @@ plt.title(f'2025년 {locate_file} 기온 예측')
 plt.legend(loc='best')
 plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(f'C:/Mtest/project_first/pic/{locate_folder}_2025_L_1.0.png')
-print(f'>>> C:/Mtest/project_first/pic/{locate_folder}_2025_L_1.0.png')
 #plt.show()
 
 #--------------------------------------------------
@@ -211,8 +210,6 @@ plt.ylim(-1.5,1.5)
 plt.title(f'2025년 {locate_file} 전년 대비 온도 변화')
 plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(f'C:/Mtest/project_first/pic/{locate_folder}_2025_B_1.0.png')
-print(f'>>> C:/Mtest/project_first/pic/{locate_folder}_2025_B_1.0.png 생성 완료')
-plt.show()
+#plt.show()
 
 print('='*80)

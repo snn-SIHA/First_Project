@@ -4,3 +4,4 @@ temp/
 *.png
 !prototype/*
 !report/*
+!pic/*

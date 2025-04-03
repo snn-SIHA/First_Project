@@ -198,7 +198,7 @@ plt.title(f'2025년 {locate_file} 기온 예측')
 plt.legend(loc='best')
 plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025_L_test.png')
+plt.savefig(f'C:/Mtest/project_first/pic/{locate_folder}_2025_L_1.2.png')
 plt.show()
 
 #--------------------------------------------------
@@ -212,7 +212,7 @@ plt.ylim(-1.5,1.5)
 plt.title(f'2025년 {locate_file} 전년 대비 온도 변화')
 plt.grid(axis='y',linestyle='--',alpha=0.35)
 plt.tight_layout()
-plt.savefig(f'C:/Mtest/project_first/{locate_folder}_2025_B_test.png')
+plt.savefig(f'C:/Mtest/project_first/pic/{locate_folder}_2025_B_1.2.png')
 plt.show()
 
 print('='*80)
