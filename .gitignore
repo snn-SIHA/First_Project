@@ -2,6 +2,7 @@ data/
 temp/
 *.csv
 *.png
+*.pptx
 !prototype/*
 !report/*
 !pic/*

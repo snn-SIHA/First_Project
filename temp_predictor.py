@@ -1,6 +1,9 @@
 # temp_predictor
+# ver 1.3.1
 # 기본 구성은 predict_2025와 동일
 # 본 문서에서는 while문과 터미널을 활용한 인터페이스 구성을 시험
+# 그래픽 출력 수정
+# 출력 속도 제한 적용
 
 #--------------------------------------------------
 import pandas as pd
@@ -63,15 +66,13 @@ def load_dataframe(name_folder=None,name_file=None,encodeing_option='cp949'):
     print('\n>>> 경고! 데이터를 호출할 수 없습니다!\n>>> 폴더 경로를 확인하거나, 파일이 잘못되었을 수 있습니다.')
     return None,None,None,None
 
-pathsave = 'C:/Mtest/project_first/'
-
 #--------------------------------------------------
 # 프로그램 소개
 intro = f'''
 {'- '*40}
 이 프로그램은 2000년부터 2024년까지의 기상청 데이터를 바탕으로 2025년의 온도를 예측합니다.
 기본적으로 ./data 폴더를 기반으로 데이터를 불러오며, 폴더와 파일명을 입력하는 것으로 데이터 파일을 호출할 수 있습니다.
-또한, 예측 모델을 변경할 수 있으며, 기본적으로 랜덤포레스트 회귀 모델을 사용합니다. 모델은 변경할 수 있으며, 변경 가능한 모델은 선형회귀, 의사결정트리, 랜덤포레스트, 서포트벡터회귀 모델을 지원합니다.
+기본 설정으로 랜덤포레스트 회귀 모델을 사용합니다. 모델은 사용자가 변경할 수 있으며, 변경 가능한 모델은 선형회귀, 의사결정트리, 랜덤포레스트, 서포트벡터회귀 모델을 지원합니다.
 필요에 따라 예측 후 그래프를 생성하고 저장할 수 있으며, 그래프는 ./pic 폴더에 저장됩니다. 또한, 저장 후 즉시 출력하는 기능이 포함되어 있습니다.
 {'- '*40}
 '''
@@ -87,8 +88,9 @@ def model_running(m):
     return  # 입력 오류시 예측 중단
   print('- '*40)
   checker(df1) # 데이터프레임 출력
-  time.sleep(1)
-  print('- '*40)
+  time.sleep(0.8)
+  print(f'{'- '*40}\n>>> 데이터 확인 성공, 학습 준비 중.')
+  time.sleep(0.5)
 
   #--------------------------------------------------
   # 2025년 데이터 확장 준비
@@ -156,11 +158,17 @@ def model_running(m):
   STS = StandardScaler()
   ytrain = STS.fit_transform(ytrain)
   ytest = STS.transform(ytest)
+  
+  print(f'>>> 학습 진행 중.')
+  time.sleep(0.4)
 
   #--------------------------------------------------
   # 모델 학습/예측 진행
   model.fit(Xtrain,ytrain.ravel())
   pre = model.predict(Xtest).reshape(-1,1)
+  
+  print(f'>>> 예측 진행 중.\n{'- '*40}')
+  time.sleep(0.25)
 
   #--------------------------------------------------
   # 결과 데이터프레임화
@@ -269,29 +277,29 @@ def predictor():
   model = RFR # 기본 모델 : 랜덤포레스트회귀
   print('>>> 2025년 기온 예측 프로그램을 실행합니다.')
   while True:
-    print('>>> 1. 예측 실행 / 2. 모델 변경 / 3. 프로그램 소개 / q. 종료')
+    print('>>> 1. 예측 실행 / 2. 예측 모델 확인 / 3. 모델 변경 / 4. 프로그램 소개 / q. 종료')
     exec = input('>>> 실행 작업 선택 : ')
 
     if exec == '1':
       print(f'\n>>> 예측 모델을 실행합니다.')
       model_running(model)
 
-    elif exec == '2':
-      print('\n>>> 모델을 변경합니다.')
+    elif exec == '2':print(f'\n>>> 현재 적용된 모델을 확인합니다.\n현재 모델 : {model}\n{'- '*40}')
+
+    elif exec == '3':
+      print('\n>>> 예측 모델을 변경합니다.')
       try:
-        print(">>> 사용 가능한 모델 목록\nLNR : LinearRegression()\nDTR : DecisionTreeRegressor()\nRFR : RandomForestRegressor()\nSVM : SVR(kernel='linear')")
+        print(">>> 사용 가능한 모델 목록\nLNR : LinearRegression()\nDTR : DecisionTreeRegressor()\nRFR : RandomForestRegressor()\nSVM : SVR(kernel='linear')\n")
         model = eval(input('>>> 모델 입력 : '))
         print(f'>>> 모델 변경 완료.\n{'- '*40}')
       except:
         print(f'>>> 모델명 입력 오류\n{'- '*40}')
 
-    elif exec == '3':print(f'\n>>> 프로그램 소개{intro}')
+    elif exec == '4':print(intro)
 
     elif exec == 'q':
       print(f'\n>>> 프로그램을 종료합니다.')
       break
-
-    elif exec == 'T':print(f'\n>>> TRACER\n현재 모델 : {model}\n{'- '*40}')
 
     else:
       print('>>> 경고! 잘못된 입력입니다.\n')
